@@ -236,4 +236,118 @@ class TestCustomValidator: XCTestCase {
         let resultWithNone = try customValidate(instanceWithNone, schema: schema)
         XCTAssertTrue(resultWithNone.valid, "Expected valid instance with null enum field")
     }
+    
+    func testAllOfWithFalseBooleanValues() throws {
+        // The schema from the user's example
+        let allOfSchema: [String: Any] = [
+            "type": "object",
+            "properties": [
+                "criteria_one": [
+                    "type": "object",
+                    "properties": [
+                        "confined_needs_aid": [
+                            "type": "boolean",
+                            "description": "Patient is confined because of illness, needs the aid of supportive devices..."
+                        ],
+                        "leaving_home_contraindicated": [
+                            "type": "boolean",
+                            "description": "Patient has a condition such that leaving home is medically contraindicated"
+                        ],
+                        "details": [
+                            "type": "string",
+                            "description": "Specify why the patient's health could worsen or be put at risk by leaving home."
+                        ]
+                    ],
+                    "required": [
+                        "confined_needs_aid",
+                        "leaving_home_contraindicated",
+                        "details"
+                    ],
+                    "allOf": [
+                        [
+                            "properties": [
+                                "confined_needs_aid": [
+                                    "const": true
+                                ]
+                            ]
+                        ],
+                        [
+                            "properties": [
+                                "leaving_home_contraindicated": [
+                                    "const": true
+                                ]
+                            ]
+                        ]
+                    ],
+                    "description": "Both `confined_needs_aid` and `leaving_home_contraindicated` MUST be selected `true`."
+                ],
+                "criteria_two": [
+                    "type": "object",
+                    "properties": [
+                        "normal_inability": [
+                            "type": "boolean",
+                            "description": "Patient has a normal inability to leave home"
+                        ],
+                        "leaving_requires_effort": [
+                            "type": "boolean",
+                            "description": "Leaving home requires a considerable and taxing effort for the patient"
+                        ],
+                        "details": [
+                            "type": "string",
+                            "description": "Specify why leaving home requires considerable and taxing effort"
+                        ]
+                    ],
+                    "required": [
+                        "normal_inability",
+                        "leaving_requires_effort",
+                        "details"
+                    ],
+                    "allOf": [
+                        [
+                            "properties": [
+                                "normal_inability": [
+                                    "const": true
+                                ]
+                            ]
+                        ],
+                        [
+                            "properties": [
+                                "leaving_requires_effort": [
+                                    "const": true
+                                ]
+                            ]
+                        ]
+                    ],
+                    "description": "Both `normal_inability` and `leaving_requires_effort` must be marked true."
+                ]
+            ],
+            "required": [
+                "criteria_one",
+                "criteria_two"
+            ]
+        ]
+        
+        // The instance from the user's example where leaving_home_contraindicated is false
+        let instance: [String: Any] = [
+            "criteria_two": [
+                "leaving_requires_effort": true,
+                "normal_inability": true,
+                "details": "test 2"
+            ],
+            "criteria_one": [
+                "leaving_home_contraindicated": false,
+                "confined_needs_aid": true,
+                "details": "test 1"
+            ]
+        ]
+        
+        // Testing with standard validation (should fail)
+        let standardResult = try validate(instance, schema: allOfSchema)
+        XCTAssertFalse(standardResult.valid, "Standard validation should fail when boolean is false but const:true is required")
+        
+        // Testing with custom validation (should pass if we're handling this case specially)
+        let customResult = try customValidate(instance, schema: allOfSchema)
+        print("Custom validation errors: \(String(describing: customResult.errors))")
+        XCTAssertTrue(customResult.valid, "Custom validation should pass even when boolean values don't match const requirements")
+    }
 } 
