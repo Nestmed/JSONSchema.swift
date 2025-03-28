@@ -60,12 +60,22 @@ public struct Schema {
     let validator = try JSONSchema.validator(for: schema)
     return try validator.validate(instance: data)
   }
+  
+  public func customValidate(_ data: Any) throws -> ValidationResult {
+    let validator = CustomValidator(schema: schema)
+    return try validator.validate(instance: data)
+  }
+  
+  public func customValidate(_ data: Any) throws -> AnySequence<ValidationError> {
+    let validator = CustomValidator(schema: schema)
+    return try validator.validate(instance: data)
+  }
 }
 
 
 func validator(for schema: [String: Any]) throws -> Validator {
   guard schema.keys.contains("$schema") else {
-    // Default schema
+    // Default schema - keep using Draft202012Validator for backwards compatibility
     return Draft202012Validator(schema: schema)
   }
 
@@ -104,5 +114,11 @@ public func validate(_ value: Any, schema: [String: Any]) throws -> ValidationRe
 
 public func validate(_ value: Any, schema: Bool) throws -> ValidationResult {
   let validator = Draft4Validator(schema: schema)
+  return try validator.validate(instance: value)
+}
+
+// New custom validation function that uses the CustomValidator directly
+public func customValidate(_ value: Any, schema: [String: Any]) throws -> ValidationResult {
+  let validator = CustomValidator(schema: schema)
   return try validator.validate(instance: value)
 }

@@ -41,6 +41,37 @@ print(try validate(["price": 34.99], schema: ["required": ["name"]]).errors)
 >>> "Required property 'name' is missing."
 ```
 
+### Custom Validator
+
+This package also provides a CustomValidator that extends the standard JSON Schema validation with the following behaviors:
+
+1. Allows `null` values for any type validation.
+2. Allows `null` values for enum validations.
+3. Skips validation for properties that are `null`.
+4. Properly handles `null` values for nested objects.
+
+To use the custom validator:
+
+```swift
+import JSONSchema
+
+// Use the customValidate function
+try JSONSchema.customValidate(["name": "Eggs", "price": NSNull()], schema: [
+  "type": "object",
+  "properties": [
+    "name": ["type": "string"],
+    "price": ["type": "number"],
+  ],
+  "required": ["name"],
+])
+
+// Or create a CustomValidator instance directly
+let validator = CustomValidator(schema: mySchema)
+try validator.validate(instance: myData)
+```
+
+This is particularly useful when validating data that may contain null values that should pass validation, even when the schema doesn't explicitly allow for nulls.
+
 ## License
 
 JSONSchema is licensed under the BSD license. See [LICENSE](LICENSE) for more
