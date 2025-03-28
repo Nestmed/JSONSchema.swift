@@ -9,7 +9,7 @@ public class Draft7Validator: Validator {
     "http://json-schema.org/draft-07/schema": DRAFT_07_META_SCHEMA,
   ]
 
-  let validations: [String: Validation] = [
+  var validations: [String: Validation] = [
     "$ref": ref,
     "not": not,
     "allOf": allOf,
